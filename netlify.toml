@@ -4,7 +4,11 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # Les variables NEXT_PUBLIC_ sont publiques par conception (incluses dans le JS du navigateur).
+  # La clé secrète SUPABASE_SERVICE_ROLE_KEY reste surveillée par le scan.
   SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXT_PUBLIC_CURRENCY"
 
+# Moteur Next.js de Netlify (pages dynamiques, middleware, server actions).
+# Sans lui, Netlify publie le site en statique et toutes les pages renvoient 404.
 [[plugins]]
   package = "@netlify/plugin-nextjs"

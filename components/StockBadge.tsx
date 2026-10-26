@@ -1,11 +1,12 @@
 export default function StockBadge({ inStock }: { inStock: boolean }) {
-  return inStock ? (
-    <span className="inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-      En stock
-    </span>
-  ) : (
-    <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
-      Rupture
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
+        inStock ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-red-50 text-red-700 ring-1 ring-red-200"
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />
+      {inStock ? "En stock" : "Rupture"}
     </span>
   );
 }

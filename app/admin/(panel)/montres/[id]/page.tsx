@@ -7,10 +7,15 @@ export default async function EditWatch({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const { data } = await db().from("watches").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
+  const w = data as Watch;
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Modifier {data.reference}</h1>
-      <WatchForm watch={data as Watch} />
+    <div className="space-y-3">
+      {w.created_by && (
+        <p className="text-sm text-stone-500">
+          Ajoutée par <b>{w.created_by}</b> le {new Date(w.created_at).toLocaleDateString("fr-FR")}
+        </p>
+      )}
+      <WatchForm watch={w} />
     </div>
   );
 }

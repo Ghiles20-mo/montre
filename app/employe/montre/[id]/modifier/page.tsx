@@ -11,10 +11,5 @@ export default async function EmployeeEditWatch({ params }: { params: Promise<{ 
 
   const { data } = await db().from("watches").select("*").eq("id", id).maybeSingle();
   if (!data) notFound();
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Modifier {data.reference}</h1>
-      <WatchForm watch={data as Watch} redirectTo={`/employe/montre/${id}`} />
-    </div>
-  );
+  return <WatchForm watch={data as Watch} redirectTo="/employe/montre/{id}" />;
 }

@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { useState } from "react";
 import * as XLSX from "xlsx";
+import Icon from "@/components/Icon";
 import { formatPrice } from "@/lib/format";
 import { importWatches, ImportRow } from "../actions";
 
-type Field = "reference" | "name" | "price" | "brand" | "description" | "in_stock";
+type Field = "reference" | "name" | "price" | "brand" | "serial_number" | "description" | "in_stock";
 
 const ALIASES: Record<Field, string[]> = {
   reference: ["reference", "ref", "references", "code", "sku"],
+  serial_number: [
+    "numero de serie", "n de serie", "no de serie", "num serie", "n serie", "no serie",
+    "serie", "serial", "serial number", "sn", "s n",
+  ],
   name: ["nom", "name", "modele", "model", "designation", "libelle"],
   price: ["prix", "price", "prix de vente", "pv", "tarif"],
   brand: ["marque", "brand"],
@@ -62,6 +67,7 @@ function parseSheet(raw: Record<string, unknown>[]): Parsed {
 
     const row: ImportRow = { reference, name, price };
     if (map.brand) row.brand = String(r[map.brand] ?? "").trim() || null;
+    if (map.serial_number) row.serial_number = String(r[map.serial_number] ?? "").trim() || null;
     if (map.description) row.description = String(r[map.description] ?? "").trim() || null;
     if (map.in_stock) row.in_stock = parseStock(r[map.in_stock]);
     rows.set(reference, row);
@@ -71,9 +77,9 @@ function parseSheet(raw: Record<string, unknown>[]): Parsed {
 
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
-    ["reference", "nom", "marque", "prix", "stock", "description"],
-    ["GA-2100-1A", "G-Shock GA-2100", "Casio", 18500, "oui", "Boîtier carbone"],
-    ["SRPD55K1", "Seiko 5 Sports", "Seiko", 42000, "non", ""],
+    ["reference", "nom", "marque", "numero de serie", "prix", "stock", "description"],
+    ["GA-2100-1A", "G-Shock GA-2100", "Casio", "202A1234", 18500, "oui", "Boîtier carbone"],
+    ["SRPD55K1", "Seiko 5 Sports", "Seiko", "", 42000, "non", ""],
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Montres");
@@ -126,9 +132,11 @@ export default function ImportExcel() {
 
   return (
     <div className="space-y-4">
-      <div className="card flex flex-wrap items-center gap-3">
-        <label className="btn cursor-pointer">
-          Choisir un fichier Excel
+      <div className="card space-y-3">
+        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-stone-300 px-4 py-8 text-center transition hover:border-stone-500">
+          <Icon name="upload" className="h-9 w-9 text-stone-500" />
+          <span className="font-semibold">Choisir un fichier Excel</span>
+          <span className="text-xs text-stone-500">{fileName || ".xlsx, .xls ou .csv"}</span>
           <input
             type="file"
             accept=".xlsx,.xls,.csv"
@@ -140,10 +148,9 @@ export default function ImportExcel() {
             }}
           />
         </label>
-        <button type="button" onClick={downloadTemplate} className="btn-light">
-          Télécharger un modèle
+        <button type="button" onClick={downloadTemplate} className="btn-light w-full">
+          Télécharger un modèle Excel
         </button>
-        {fileName && <span className="text-sm text-stone-500">{fileName}</span>}
       </div>
 
       {error && <p className="text-red-600">{error}</p>}
@@ -169,7 +176,7 @@ export default function ImportExcel() {
                 <span className="text-amber-700"> · {parsed.errors.length} lignes ignorées</span>
               )}
             </p>
-            <button onClick={runImport} disabled={!!progress || parsed.rows.length === 0} className="btn">
+            <button onClick={runImport} disabled={!!progress || parsed.rows.length === 0} className="btn w-full sm:w-auto">
               {progress ? `Import… ${progress.done}/${progress.total}` : "Importer"}
             </button>
           </div>
@@ -190,6 +197,7 @@ export default function ImportExcel() {
                   <th className="p-2">Référence</th>
                   <th className="p-2">Nom</th>
                   {parsed.fields.includes("brand") && <th className="p-2">Marque</th>}
+                  {parsed.fields.includes("serial_number") && <th className="p-2">N° série</th>}
                   <th className="p-2 text-right">Prix</th>
                   {parsed.fields.includes("in_stock") && <th className="p-2">Stock</th>}
                 </tr>
@@ -200,6 +208,7 @@ export default function ImportExcel() {
                     <td className="p-2 font-mono">{r.reference}</td>
                     <td className="p-2">{r.name}</td>
                     {parsed.fields.includes("brand") && <td className="p-2">{r.brand}</td>}
+                    {parsed.fields.includes("serial_number") && <td className="p-2 font-mono">{r.serial_number}</td>}
                     <td className="p-2 text-right">{formatPrice(r.price)}</td>
                     {parsed.fields.includes("in_stock") && <td className="p-2">{r.in_stock ? "Oui" : "Non"}</td>}
                   </tr>

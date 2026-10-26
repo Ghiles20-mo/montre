@@ -6,12 +6,16 @@ import { requireAdmin, requireEditor } from "@/lib/auth";
 import { BUCKET } from "@/lib/format";
 import { db } from "@/lib/supabase";
 
-type Result = { ok: true } | { error: string };
+type Result = { ok: true; id: string } | { error: string };
 
 function parsePrice(v: unknown): number | null {
-  const n = Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
+  const s = String(v ?? "").replace(/\s/g, "").replace(",", ".");
+  if (s === "") return null;
+  const n = Number(s);
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
 }
+
+const text = (v: unknown) => String(v ?? "").trim() || null;
 
 function refreshAll() {
   revalidatePath("/", "layout");
@@ -21,14 +25,13 @@ async function removePhoto(path: string | null | undefined) {
   if (path) await db().storage.from(BUCKET).remove([path]);
 }
 
-/* ---------- Montres ---------- */
-// Création, suppression et import : admin uniquement.
-// Modification d'une montre existante (infos, prix, stock, photo) : admin ou employé autorisé.
+/* ---------- Montres ----------
+   Ajout et modification : admin ou employé ayant le droit « Peut ajouter et modifier ».
+   Suppression et import Excel : admin uniquement. */
 
 export async function saveWatch(formData: FormData): Promise<Result> {
+  const staff = await requireEditor();
   const id = String(formData.get("id") ?? "") || null;
-  if (id) await requireEditor();
-  else await requireAdmin();
   const reference = String(formData.get("reference") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
   const price = parsePrice(formData.get("price"));
@@ -38,13 +41,15 @@ export async function saveWatch(formData: FormData): Promise<Result> {
   const row: Record<string, unknown> = {
     reference,
     name,
-    brand: String(formData.get("brand") ?? "").trim() || null,
-    description: String(formData.get("description") ?? "").trim() || null,
+    brand: text(formData.get("brand")),
+    serial_number: text(formData.get("serial_number")),
+    description: text(formData.get("description")),
     price,
     in_stock: formData.get("in_stock") === "on",
   };
   const newPhoto = String(formData.get("photo_path") ?? "") || null;
   if (newPhoto) row.photo_path = newPhoto;
+  if (!id) row.created_by = staff.name;
 
   const supabase = db();
   let oldPhoto: string | null = null;
@@ -53,14 +58,14 @@ export async function saveWatch(formData: FormData): Promise<Result> {
     oldPhoto = data?.photo_path ?? null;
   }
 
-  const { error } = id
-    ? await supabase.from("watches").update(row).eq("id", id)
-    : await supabase.from("watches").insert(row);
+  const { data, error } = id
+    ? await supabase.from("watches").update(row).eq("id", id).select("id").single()
+    : await supabase.from("watches").insert(row).select("id").single();
   if (error) return { error: error.code === "23505" ? "Cette référence existe déjà" : error.message };
 
   if (oldPhoto && oldPhoto !== newPhoto) await removePhoto(oldPhoto);
   refreshAll();
-  return { ok: true };
+  return { ok: true, id: data.id };
 }
 
 export async function toggleStock(formData: FormData) {
@@ -74,8 +79,7 @@ export async function toggleStock(formData: FormData) {
 
 export async function deleteWatch(formData: FormData) {
   await requireAdmin();
-  const supabase = db();
-  const { data } = await supabase
+  const { data } = await db()
     .from("watches")
     .delete()
     .eq("id", String(formData.get("id")))
@@ -99,7 +103,7 @@ export async function createPhotoUpload(
   return { path: data.path, token: data.token };
 }
 
-export async function setWatchPhoto(id: string, path: string): Promise<Result> {
+export async function setWatchPhoto(id: string, path: string): Promise<{ ok: true } | { error: string }> {
   await requireEditor();
   const supabase = db();
   const { data: old } = await supabase.from("watches").select("photo_path").eq("id", id).single();
@@ -117,6 +121,7 @@ export type ImportRow = {
   name: string;
   price: number;
   brand?: string | null;
+  serial_number?: string | null;
   description?: string | null;
   in_stock?: boolean;
 };
@@ -159,11 +164,12 @@ export async function createEmployee(formData: FormData) {
   await requireAdmin();
   const first_name = String(formData.get("first_name") ?? "").trim();
   const last_name = String(formData.get("last_name") ?? "").trim();
+  const can_edit = formData.get("can_edit") === "true";
   if (!first_name || !last_name) return;
   for (let i = 0; i < 5; i++) {
     const { error } = await db()
       .from("employees")
-      .insert({ first_name, last_name, access_code: generateCode() });
+      .insert({ first_name, last_name, can_edit, access_code: generateCode() });
     if (!error || error.code !== "23505") break;
   }
   refreshAll();
@@ -178,20 +184,20 @@ export async function regenerateCode(formData: FormData) {
   refreshAll();
 }
 
-export async function toggleEmployee(formData: FormData) {
+export async function setEmployeeActive(formData: FormData) {
   await requireAdmin();
   await db()
     .from("employees")
-    .update({ active: formData.get("active") !== "true" })
+    .update({ active: formData.get("active") === "true" })
     .eq("id", String(formData.get("id")));
   refreshAll();
 }
 
-export async function toggleEmployeeEdit(formData: FormData) {
+export async function setEmployeeRights(formData: FormData) {
   await requireAdmin();
   await db()
     .from("employees")
-    .update({ can_edit: formData.get("can_edit") !== "true" })
+    .update({ can_edit: formData.get("can_edit") === "true" })
     .eq("id", String(formData.get("id")));
   refreshAll();
 }

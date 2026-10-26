@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ConfirmButton from "@/components/ConfirmButton";
+import Icon from "@/components/Icon";
 import SearchBox from "@/components/SearchBox";
 import StockBadge from "@/components/StockBadge";
 import WatchImage from "@/components/WatchImage";
@@ -7,7 +8,7 @@ import { formatPrice, searchFilters, Watch } from "@/lib/format";
 import { db } from "@/lib/supabase";
 import { deleteWatch, toggleStock } from "./actions";
 
-const PER_PAGE = 50;
+const PER_PAGE = 40;
 
 type SP = Promise<{ q?: string; stock?: string; page?: string }>;
 
@@ -46,19 +47,19 @@ export default async function AdminWatches({ searchParams }: { searchParams: SP 
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="space-y-4">
+      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:px-0">
         <Stat label="Montres" value={s.total} />
-        <Stat label="En stock" value={s.inStock} />
-        <Stat label="En rupture" value={s.out} />
-        <Stat label="Sans photo" value={s.noPhoto} href="/admin/photos" />
+        <Stat label="En stock" value={s.inStock} tone="text-emerald-700" />
+        <Stat label="En rupture" value={s.out} tone="text-red-700" />
+        <Stat label="Sans photo" value={s.noPhoto} tone="text-amber-700" href="/admin/photos" />
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="sticky top-14 z-10 -mx-4 space-y-2 bg-stone-50/95 px-4 py-2 backdrop-blur-md sm:static sm:mx-0 sm:flex sm:items-center sm:gap-3 sm:space-y-0 sm:bg-transparent sm:p-0">
         <div className="flex-1">
-          <SearchBox placeholder="Référence, nom ou marque…" />
+          <SearchBox placeholder="Référence, nom, marque, n° de série…" />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 rounded-xl bg-stone-200/70 p-1">
           {[
             ["", "Tous"],
             ["in", "En stock"],
@@ -67,7 +68,9 @@ export default async function AdminWatches({ searchParams }: { searchParams: SP 
             <Link
               key={v}
               href={href({ stock: v, page: 1 })}
-              className={`rounded-md px-3 py-2 text-sm ${stock === v ? "bg-stone-900 text-white" : "bg-white hover:bg-stone-100"}`}
+              className={`flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium transition ${
+                stock === v ? "bg-white text-stone-900 shadow-sm" : "text-stone-600"
+              }`}
             >
               {label}
             </Link>
@@ -77,64 +80,64 @@ export default async function AdminWatches({ searchParams }: { searchParams: SP 
 
       {error && <p className="text-red-600">{error.message}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b border-stone-200 bg-stone-50 text-left text-stone-500">
-            <tr>
-              <th className="p-3">Photo</th>
-              <th className="p-3">Référence</th>
-              <th className="p-3">Nom</th>
-              <th className="p-3">Marque</th>
-              <th className="p-3 text-right">Prix</th>
-              <th className="p-3">Stock</th>
-              <th className="p-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {watches.map((w) => (
-              <tr key={w.id} className="border-b border-stone-100 last:border-0">
-                <td className="p-2">
-                  <WatchImage path={w.photo_path} alt={w.name} className="h-14 w-14 rounded-md" />
-                </td>
-                <td className="p-3 font-mono">{w.reference}</td>
-                <td className="p-3 font-medium">{w.name}</td>
-                <td className="p-3 text-stone-600">{w.brand}</td>
-                <td className="whitespace-nowrap p-3 text-right">{formatPrice(w.price)}</td>
-                <td className="p-3">
+      <p className="text-sm text-stone-500">{count ?? 0} montre{(count ?? 0) > 1 ? "s" : ""}</p>
+
+      <ul className="grid gap-3 md:grid-cols-2">
+        {watches.map((w) => (
+          <li key={w.id} className="card flex gap-3 p-3">
+            <Link href={`/admin/montres/${w.id}`} className="shrink-0">
+              <WatchImage path={w.photo_path} alt={w.name} className="h-24 w-24 rounded-xl" />
+            </Link>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Link href={`/admin/montres/${w.id}`} className="min-w-0">
+                <div className="truncate font-mono text-xs text-stone-500">{w.reference}</div>
+                <div className="truncate font-semibold leading-tight">{w.name}</div>
+                <div className="truncate text-xs text-stone-500">
+                  {[w.brand, w.serial_number && `S/N ${w.serial_number}`].filter(Boolean).join(" · ")}
+                </div>
+              </Link>
+              <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                <div>
+                  <div className="font-semibold">{formatPrice(w.price)}</div>
+                  {w.created_by && <div className="text-[11px] text-stone-400">Ajoutée par {w.created_by}</div>}
+                </div>
+                <div className="flex items-center gap-1">
                   <form action={toggleStock}>
                     <input type="hidden" name="id" value={w.id} />
                     <input type="hidden" name="in_stock" value={String(w.in_stock)} />
-                    <button title="Cliquer pour changer">
+                    <button title="Changer le stock" className="p-1">
                       <StockBadge inStock={w.in_stock} />
                     </button>
                   </form>
-                </td>
-                <td className="p-3">
-                  <div className="flex justify-end gap-2">
-                    <Link href={`/admin/montres/${w.id}`} className="btn-light">Modifier</Link>
-                    <form action={deleteWatch}>
-                      <input type="hidden" name="id" value={w.id} />
-                      <ConfirmButton message={`Supprimer ${w.reference} ?`} className="btn-danger">
-                        Suppr.
-                      </ConfirmButton>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {watches.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-8 text-center text-stone-500">Aucune montre trouvée</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <form action={deleteWatch}>
+                    <input type="hidden" name="id" value={w.id} />
+                    <ConfirmButton
+                      message={`Supprimer ${w.reference} ?`}
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-stone-400 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Icon name="trash" />
+                    </ConfirmButton>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {watches.length === 0 && (
+        <div className="card py-12 text-center text-stone-500">
+          Aucune montre trouvée.
+          <div className="mt-3">
+            <Link href="/admin/montres/nouvelle" className="btn">Ajouter une montre</Link>
+          </div>
+        </div>
+      )}
 
       {pages > 1 && (
         <div className="flex items-center justify-center gap-3 text-sm">
           {page > 1 && <Link href={href({ page: page - 1 })} className="btn-light">← Précédent</Link>}
-          <span>Page {page} / {pages}</span>
+          <span className="text-stone-500">{page} / {pages}</span>
           {page < pages && <Link href={href({ page: page + 1 })} className="btn-light">Suivant →</Link>}
         </div>
       )}
@@ -142,11 +145,11 @@ export default async function AdminWatches({ searchParams }: { searchParams: SP 
   );
 }
 
-function Stat({ label, value, href }: { label: string; value: number; href?: string }) {
+function Stat({ label, value, href, tone = "" }: { label: string; value: number; href?: string; tone?: string }) {
   const content = (
-    <div className="card p-4">
-      <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-sm text-stone-500">{label}</div>
+    <div className="card min-w-[130px] snap-start p-3.5 sm:min-w-0">
+      <div className={`text-2xl font-bold ${tone}`}>{value}</div>
+      <div className="text-xs font-medium text-stone-500">{label}</div>
     </div>
   );
   return href ? <Link href={href}>{content}</Link> : content;

@@ -5,10 +5,12 @@ export type Watch = {
   reference: string;
   name: string;
   brand: string | null;
+  serial_number: string | null;
   description: string | null;
   price: number;
   in_stock: boolean;
   photo_path: string | null;
+  created_by: string | null;
   created_at: string;
 };
 
@@ -24,12 +26,15 @@ export function formatPrice(value: number | string) {
   return `${nf.format(Number(value))} ${currency}`;
 }
 
-// Recherche multi-mots : chaque mot doit apparaître dans la référence, le nom ou la marque.
+// Recherche multi-mots : chaque mot doit apparaître dans la référence, le nom, la marque ou le n° de série.
 export function searchFilters(q: string): string[] {
   return q
     .replace(/[,()%*\\"]/g, " ")
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 5)
-    .map((w) => `reference.ilike.%${w}%,name.ilike.%${w}%,brand.ilike.%${w}%`);
+    .map(
+      (w) =>
+        `reference.ilike.%${w}%,name.ilike.%${w}%,brand.ilike.%${w}%,serial_number.ilike.%${w}%`,
+    );
 }

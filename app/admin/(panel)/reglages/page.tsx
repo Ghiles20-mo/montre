@@ -7,7 +7,6 @@ export default function SettingsPage() {
   const [state, action, pending] = useActionState(changeAdminPassword, {});
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Réglages</h1>
       <form action={action} key={state.ok ? "done" : "form"} className="card max-w-md space-y-4">
         <h2 className="font-semibold">Changer le mot de passe admin</h2>
         <div>
@@ -24,7 +23,7 @@ export default function SettingsPage() {
         </div>
         {state.error && <p className="text-sm text-red-600">{state.error}</p>}
         {state.ok && <p className="text-sm text-emerald-700">Mot de passe modifié.</p>}
-        <button className="btn" disabled={pending}>{pending ? "Enregistrement…" : "Enregistrer"}</button>
+        <button className="btn w-full sm:w-auto" disabled={pending}>{pending ? "Enregistrement…" : "Enregistrer"}</button>
       </form>
     </div>
   );

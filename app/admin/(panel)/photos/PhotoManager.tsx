@@ -72,7 +72,7 @@ export default function PhotoManager({ watches }: { watches: PhotoWatch[] }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="btn cursor-pointer">
+          <label className="btn w-full cursor-pointer sm:w-auto">
             Sélectionner les photos
             <input
               type="file"

@@ -2,23 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  /* 16px minimum sur les champs : iOS ne zoome plus quand on les touche */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  button,
+  a {
+    touch-action: manipulation;
+  }
+}
+
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-stone-900 outline-none focus:border-stone-900 focus:ring-1 focus:ring-stone-900;
+    @apply w-full rounded-xl border border-stone-300 bg-white px-3.5 py-3 text-base text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white transition active:scale-[0.98] hover:bg-stone-800 disabled:opacity-50;
   }
   .btn-light {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-800 hover:bg-stone-100 disabled:opacity-50;
+    @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-sm font-medium text-stone-800 transition active:scale-[0.98] hover:bg-stone-100 disabled:opacity-50;
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50;
+    @apply inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3.5 py-2 text-sm font-medium text-red-700 transition active:scale-[0.98] hover:bg-red-50;
   }
   .card {
-    @apply rounded-xl border border-stone-200 bg-white p-5 shadow-sm;
+    @apply rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm sm:p-5;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-stone-700;
+    @apply mb-1.5 block text-sm font-medium text-stone-700;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

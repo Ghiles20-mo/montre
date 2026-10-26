@@ -9,9 +9,14 @@ create table if not exists public.watches (
   price       numeric(12, 2) not null default 0 check (price >= 0),
   in_stock    boolean not null default true,
   photo_path  text,
+  serial_number text,
+  created_by  text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+alter table public.watches add column if not exists serial_number text;
+alter table public.watches add column if not exists created_by text;
 
 create index if not exists watches_name_idx on public.watches (lower(name));
 create index if not exists watches_photo_idx on public.watches (photo_path) where photo_path is null;
@@ -22,7 +27,7 @@ create table if not exists public.employees (
   last_name   text not null,
   access_code text not null unique,
   active      boolean not null default true,
-  -- false = lecture seule ; true = peut modifier les montres (prix, stock, infos, photo)
+  -- false = lecture seule ; true = peut ajouter et modifier des montres (prix, stock, infos, photo)
   can_edit    boolean not null default false,
   created_at  timestamptz not null default now()
 );

@@ -18,10 +18,5 @@ async function allWatches(): Promise<PhotoWatch[]> {
 
 export default async function PhotosPage() {
   const watches = await allWatches();
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Photos des montres</h1>
-      <PhotoManager watches={watches} />
-    </div>
-  );
+  return <PhotoManager watches={watches} />;
 }
