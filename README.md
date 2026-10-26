@@ -17,6 +17,10 @@ Plateforme de gestion pour un magasin de montres : Next.js + Supabase, déployé
 - Droits par employé : **Lecture seule** (consulter) ou **Peut modifier** (prix, stock, infos, photo
   d'une montre existante). Ajout, suppression, import et gestion des employés restent réservés à l'admin.
 
+**Réglages** (`/admin/reglages`)
+- Changer le mot de passe admin. `ADMIN_PASSWORD` n'est que le mot de passe de départ : une fois
+  changé, le nouveau (haché) est stocké dans Supabase et remplace celui de `.env`.
+
 ## Installation
 
 ### 1. Supabase

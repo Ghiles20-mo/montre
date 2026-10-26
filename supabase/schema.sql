@@ -29,6 +29,12 @@ create table if not exists public.employees (
 
 alter table public.employees add column if not exists can_edit boolean not null default false;
 
+-- Réglages de l'application (ex. mot de passe admin, stocké haché)
+create table if not exists public.app_settings (
+  key   text primary key,
+  value text not null
+);
+
 create or replace function public.touch_updated_at() returns trigger
 language plpgsql as $$
 begin
@@ -43,6 +49,7 @@ create trigger watches_touch before update on public.watches
 -- RLS activé sans aucune policy : seul le serveur (clé service_role) peut lire/écrire.
 alter table public.watches enable row level security;
 alter table public.employees enable row level security;
+alter table public.app_settings enable row level security;
 
 -- Bucket public pour les photos (lecture publique par URL, écriture via URL signée du serveur)
 insert into storage.buckets (id, name, public)

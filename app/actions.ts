@@ -1,7 +1,7 @@
 "use server";
 
-import { createHash, timingSafeEqual } from "crypto";
 import { redirect } from "next/navigation";
+import { verifyAdminPassword } from "@/lib/adminPassword";
 import { createSession } from "@/lib/session";
 import { db } from "@/lib/supabase";
 
@@ -27,12 +27,9 @@ export async function employeeLogin(_: LoginState, formData: FormData): Promise<
   redirect("/employe");
 }
 
-const sha = (s: string) => createHash("sha256").update(s).digest();
-
 export async function adminLogin(_: LoginState, formData: FormData): Promise<LoginState> {
   const password = String(formData.get("password") ?? "");
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected || !timingSafeEqual(sha(password), sha(expected))) {
+  if (!(await verifyAdminPassword(password))) {
     await slowDown();
     return { error: "Mot de passe incorrect" };
   }
